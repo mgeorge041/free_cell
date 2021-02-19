@@ -25,7 +25,7 @@ public class GameManager : MonoBehaviour
     // Shuffle cards
     public void ShuffleCards() {
         List<Card> shuffledCards = new List<Card>();
-        for (int i = 0; i < 52; i++) {
+        for (int i = 0; i < 16; i++) {
             int randomInt = Random.Range(0, cards.Count);
             Card randomCard = cards[randomInt];
             shuffledCards.Add(randomCard);
@@ -48,7 +48,7 @@ public class GameManager : MonoBehaviour
             Suit.hearts,
             Suit.spades
         };
-        for (int i = 0; i < 13; i++) {
+        for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
 
                 // Create card
