@@ -1,1 +1,4 @@
 *.cs.meta
+Prefabs/
+Resources/
+Scenes/
