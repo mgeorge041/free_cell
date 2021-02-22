@@ -6,28 +6,35 @@ using UnityEngine.UI;
 
 public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, IDragHandler
 {
-    public bool isMoveable = true;
-    private Vector3 startPosition;
-    public GameManager gameManager;
-    private CardColor cardColor = CardColor.red;
-    private Suit suit;
-    private int cardValue = 1;
-    public Text cardValueText;
-    private DropSpace parentDropSpace;
-    public Image cardImage;
-    private Sprite[] cardSprites;
-    private Sprite originalSprite;
+    // Card properties
+    private Suit cardSuit;
+    private int cardValue;
+    private CardColor cardColor;
+    public bool isMoveable = false;
 
     // Train of cards
     private Card nextCard;
     private Card prevCard;
     private int numNextCards;
 
-    // Initialize card
-    public void Initialize(int cardValue, Suit suit) {
+    // Card object items
+    public Text cardValueText;
+    public Image cardImage;
+    private Sprite[] cardSprites;
+    private Sprite originalSprite;
+    public Sprite highlightSprite;
+
+    // External objects
+    private DropSpace parentDropSpace;
+    private GameManager gameManager;
+
+    // Initialize card properties
+    public void Initialize (int cardValue, Suit suit) {
         this.cardValue = cardValue;
         cardValueText.text = cardValue.ToString();
 
+        // Set card suit and color
+        this.cardSuit = suit;
         if (suit == Suit.clubs || suit == Suit.spades) {
             cardColor = CardColor.black;
         }
@@ -35,8 +42,10 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
             cardColor = CardColor.red;
         }
 
+        // Set card sprite
         cardSprites = Resources.LoadAll<Sprite>("Card Art/");
-        switch (suit) {
+        highlightSprite = cardSprites[4];
+        switch (cardSuit) {
             case Suit.clubs:
                 cardImage.sprite = cardSprites[0];
                 break;
@@ -54,6 +63,14 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         }
     }
 
+    // Reset card
+    public void ResetCard() {
+        nextCard = null;
+        prevCard = null;
+        isMoveable = false;
+        numNextCards = 0;
+    }
+
     // Get card value
     public int GetCardValue() {
         return cardValue;
@@ -64,6 +81,16 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         return cardColor;
     }
 
+    // Get card suit
+    public Suit GetCardSuit() {
+        return cardSuit;
+    }
+
+    // Get num next cards
+    public int GetNumNextCards() {
+        return numNextCards;
+    }
+
     // Get next card
     public Card GetNextCard() {
         return nextCard;
@@ -72,18 +99,17 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     // Set next card
     public void SetNextCard(Card nextCard) {
         this.nextCard = nextCard;
-        if (IsNextCardInOrder(nextCard)) {
-            Debug.Log("Next card is in order");
-            isMoveable = true;
-            if (nextCard != null) {
-                Debug.Log("next card value: " + nextCard.cardValue);
-                numNextCards = nextCard.numNextCards + 1;
-            }
+
+        if (nextCard == null) {
+            numNextCards = 0;
+        }
+        else if (IsNextCardInOrder(nextCard)) {
+            numNextCards = nextCard.GetNumNextCards() + 1;
+            nextCard.SetPrevCard(this);
         }
         else {
-            isMoveable = false;
             numNextCards = 0;
-            SetPrevCardsImmovable();
+            nextCard.SetPrevCard(this);
         }
     }
 
@@ -98,12 +124,13 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         return false;
     }
 
-    // Determine whether prev card is in order
-    public bool IsPrevCardInOrder(Card prevCard) {
-        if (prevCard == null) {
-            return true;
+    // Determine whether next card is in order
+    public bool IsNextCardInOrder() {
+        if (nextCard == null) {
+            return false;
         }
-        if (cardColor != prevCard.cardColor && cardValue == prevCard.cardValue - 1) {
+
+        if (cardColor != nextCard.cardColor && cardValue == nextCard.cardValue + 1) {
             return true;
         }
         return false;
@@ -119,6 +146,29 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         this.prevCard = prevCard;
     }
 
+    // Determine whether prev card is in order
+    public bool IsPrevCardInOrder(Card prevCard) {
+        if (prevCard == null) {
+            return true;
+        }
+        if (cardColor != prevCard.cardColor && cardValue == prevCard.cardValue - 1) {
+            return true;
+        }
+        return false;
+    }
+
+    // Determine whether prev card is in order
+    public bool IsPrevCardInOrder() {
+        if (prevCard == null) {
+            return false;
+        }
+        
+        if (cardColor != prevCard.cardColor && cardValue == prevCard.cardValue - 1) {
+            return true;
+        }
+        return false;
+    }
+
     // Set prev cards immoveable
     public void SetPrevCardsImmovable() {
         if (prevCard != null) {
@@ -128,13 +178,11 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     }
 
     // Determine whether can move to drop space
-    private bool CanMoveToDropSpace(DropSpace dropSpace) {
+    public bool CanMoveToDropSpace(DropSpace dropSpace) {
         Card lastCard = dropSpace.GetLastCard();
         if (lastCard != null) {
-            Debug.Log("last card value: " + lastCard.cardValue);
-            Debug.Log("last card color: " + lastCard.cardColor);
-            Debug.Log("card value: " + cardValue);
-            Debug.Log("Card color: " + cardColor);
+            Debug.Log("last card: " + lastCard.cardValue + ", " + lastCard.cardColor);
+            Debug.Log("card: " + cardValue + ", " + cardColor);
         }
 
         // Determine whether can drop card on space
@@ -145,27 +193,53 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         return false;
     }
 
-    // Set parent drop space
-    public void SetParentDropSpace(DropSpace parentDropSpace) {
-        this.parentDropSpace = parentDropSpace;
-    }
-
     // Set game manager
     public void SetGameManager(GameManager gameManager) {
         this.gameManager = gameManager;
     }
 
+    // Drag next card
+    public void DragNextCard(PointerEventData pointerEventData, Vector2 yOffset) {
+        if (nextCard != null) {
+            nextCard.transform.position = pointerEventData.position + yOffset;
+            nextCard.DragNextCard(pointerEventData, yOffset + yOffset);
+        }
+    }
+
+    // Set next card start position
+    public void SetCardObjectParent() {
+        transform.SetParent(gameManager.dragCardTransform);
+        if (nextCard != null) {
+            nextCard.SetCardObjectParent();
+        }
+    }
+
+    // Set parent drop space
+    public void SetParentDropSpace(DropSpace parentDropSpace) {
+        this.parentDropSpace = parentDropSpace;
+    }
+
+    // Reset card position
+    public void ResetCardPosition() {
+        transform.SetParent(parentDropSpace.transform);
+        if (nextCard != null) {
+            nextCard.ResetCardPosition();
+        }
+    }
+
+    // Set raycast target
+    public void SetNextCardRaycastTarget(bool isRaycastTarget) {
+        cardImage.raycastTarget = isRaycastTarget;
+        if (nextCard != null) {
+            nextCard.SetNextCardRaycastTarget(isRaycastTarget);
+        }
+    }
+
     // Mouse enter
     public void OnPointerEnter(PointerEventData pointerEventData) {
-        Debug.Log("current card: " + cardValue);
-        Debug.Log("current card: " + cardColor);
-        if (nextCard != null) {
-            Debug.Log("next card: " + nextCard.cardValue);
-            Debug.Log("next card: " + nextCard.cardColor);
-        }
         if (isMoveable) {
             originalSprite = cardImage.sprite;
-            //cardImage.sprite = cardSprites[4];
+            cardImage.sprite = highlightSprite;
         }
     }
 
@@ -181,65 +255,40 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         transform.position = pointerEventData.position;
         DragNextCard(pointerEventData, new Vector2(0, -cardImage.sprite.rect.height / 4));
     }
-
-    // Drag next card
-    public void DragNextCard(PointerEventData pointerEventData, Vector2 yOffset) {
-        if (nextCard != null) {
-            nextCard.transform.position = pointerEventData.position + yOffset;
-            nextCard.DragNextCard(pointerEventData, yOffset + yOffset);
-        }
-    }
-
-    // Set next card start position
-    public void SetNextCardStartPosition() {
-        //startPosition = transform.position;
-        transform.SetParent(gameManager.dragCardTransform);
-        if (nextCard != null) {
-            nextCard.SetNextCardStartPosition();
-        }
-    }
-
-    // Reset next card
-    public void ResetNextCardPosition() {
-        //transform.position = startPosition;
-        transform.SetParent(parentDropSpace.transform);
-        if (nextCard != null) {
-            nextCard.ResetNextCardPosition();
-        }
-    }
-
     // Mouse down
     public void OnPointerDown(PointerEventData pointerEventData) {
         if (isMoveable) {
-            SetNextCardStartPosition();
-            cardImage.raycastTarget = false;
+            SetCardObjectParent();
+            SetNextCardRaycastTarget(false);
         }
     }
 
     // Mouse up
     public void OnPointerUp(PointerEventData pointerEventData) {
-        cardImage.raycastTarget = true;
-        DropSpace currentDropSpace = gameManager.GetDropSpace();
+        SetNextCardRaycastTarget(true);
+        DropSpace currentDropSpace = gameManager.GetEndingDropSpace(pointerEventData.position);
         if (currentDropSpace != null) {
             if (CanMoveToDropSpace(currentDropSpace)) {
                 parentDropSpace.RemoveCard(this);
                 currentDropSpace.AddCard(this);
             }
             else {
-                ResetNextCardPosition();
+                ResetCardPosition();
             }
+        }
+        else {
+            ResetCardPosition();
         }
     }
 
     // Start is called before the first frame update
-    void Start()
-    {
-        
+    void Start() {
+
     }
 
     // Update is called once per frame
-    void Update()
-    {
-        
+    void Update() {
+
     }
+
 }

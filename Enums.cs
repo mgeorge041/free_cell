@@ -3,11 +3,13 @@
     hearts,
     diamonds,
     clubs,
-    spades
+    spades,
+    None
 }
 
 public enum CardColor
 {
     red,
-    black
+    black,
+    None
 }
