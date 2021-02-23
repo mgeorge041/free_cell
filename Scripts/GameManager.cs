@@ -9,10 +9,11 @@ public class GameManager : MonoBehaviour
     public GameObject cardPrefab;
 
     // Drop spaces
-    int numPlayDropSpaces = 8;
-    public DropSpace[] playDropSpaces;
-    public DropSpace[] freeDropSpaces;
-    public GameObject dropSpacePrefab;
+    int numPlaySpaces = 8;
+    int numFreeSpaces = 4;
+    public PlaySpace[] playSpaces;
+    public FreeSpace[] freeSpaces;
+    public GameObject playSpacePrefab;
     public GameObject freeSpacePrefab;
     
     // Area transforms
@@ -36,10 +37,16 @@ public class GameManager : MonoBehaviour
 
     // Get ending drop space
     public DropSpace GetEndingDropSpace(Vector2 mousePosition) {
-        for (int i = 0; i < numPlayDropSpaces; i++) {
-            if (playDropSpaces[i].boxCollider.OverlapPoint(mousePosition)) {
-                Debug.Log("returning drop space");
-                return playDropSpaces[i];
+        for (int i = 0; i < numPlaySpaces; i++) {
+            if (playSpaces[i].Contains(mousePosition)) {
+                Debug.Log("returning play space");
+                return playSpaces[i];
+            }
+        }
+        for (int i = 0; i < numFreeSpaces; i++) {
+            if (freeSpaces[i].Contains(mousePosition)) {
+                Debug.Log("returning free space");
+                return freeSpaces[i];
             }
         }
         return null;
@@ -88,15 +95,15 @@ public class GameManager : MonoBehaviour
     public void ResetGame() {
 
         // Clear drop space cards
-        for (int i = 0; i < numPlayDropSpaces; i++) {
-            playDropSpaces[i].ClearCards();
+        for (int i = 0; i < numPlaySpaces; i++) {
+            playSpaces[i].ClearCards();
         }
 
         // Randomly play cards
         ShuffleCards();
         int column = 0;
         for (int i = 0; i < cards.Count; i++) {
-            playDropSpaces[column].AddCard(cards[i]);
+            playSpaces[column].AddCard(cards[i]);
             column++;
             if (column >= 8) {
                 column = 0;
@@ -104,35 +111,29 @@ public class GameManager : MonoBehaviour
         }
 
         // Set moveability for cards in piles
-        for (int i = 0; i < numPlayDropSpaces; i++) {
-            playDropSpaces[i].SetTrainMoveability(numMoveableCards);
+        for (int i = 0; i < numPlaySpaces; i++) {
+            playSpaces[i].SetTrainMoveability(numMoveableCards);
         }
     }
 
     // Start is called before the first frame update
     void Start() {
-        playDropSpaces = new DropSpace[8];
+        playSpaces = new PlaySpace[8];
         // Create play section drop spaces
         for (int i = 0; i < 8; i++) {
-            GameObject newDropSpaceObject = Instantiate(dropSpacePrefab);
-            newDropSpaceObject.transform.SetParent(playSectionTransform);
-
-            DropSpace newDropSpace = newDropSpaceObject.GetComponent<DropSpace>();
-            playDropSpaces[i] = newDropSpace;
-            newDropSpace.Initialize(this, false);
-
+            PlaySpace newPlaySpace = DropSpace.CreateDropSpace<PlaySpace>();
+            newPlaySpace.transform.SetParent(playSectionTransform);
+            playSpaces[i] = newPlaySpace;
+            newPlaySpace.Initialize(this);
         }
 
         // Create free section drop spaces
-        freeDropSpaces = new DropSpace[4];
+        freeSpaces = new FreeSpace[4];
         for (int i = 0; i < 4; i++) {
-            GameObject newFreeSpaceObject = Instantiate(freeSpacePrefab);
-            newFreeSpaceObject.transform.SetParent(freeSectionTransform);
-
-            DropSpace newDropSpace = newFreeSpaceObject.GetComponent<DropSpace>();
-            freeDropSpaces[i] = newDropSpace;
-            newDropSpace.Initialize(this, true);
-
+            FreeSpace newFreeSpace = DropSpace.CreateDropSpace<FreeSpace>();
+            newFreeSpace.transform.SetParent(freeSectionTransform);
+            freeSpaces[i] = newFreeSpace;
+            newFreeSpace.Initialize(this);
         }
         CreateCards();
         ResetGame();

@@ -177,20 +177,14 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         }
     }
 
-    // Determine whether can move to drop space
-    public bool CanMoveToDropSpace(DropSpace dropSpace) {
-        Card lastCard = dropSpace.GetLastCard();
-        if (lastCard != null) {
-            Debug.Log("last card: " + lastCard.cardValue + ", " + lastCard.cardColor);
-            Debug.Log("card: " + cardValue + ", " + cardColor);
-        }
+    // Get parent drop space
+    public DropSpace GetParentDropSpace() {
+        return parentDropSpace;
+    }
 
-        // Determine whether can drop card on space
-        if (lastCard == null || IsPrevCardInOrder(lastCard)) {
-            Debug.Log("can move to drop space");
-            return true;
-        }
-        return false;
+    // Remove card from parent drop space
+    public void RemoveFromParentDropSpace() {
+        parentDropSpace.RemoveCard(this);
     }
 
     // Set game manager
@@ -201,6 +195,7 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     // Drag next card
     public void DragNextCard(PointerEventData pointerEventData, Vector2 yOffset) {
         if (nextCard != null) {
+            Debug.Log("dragging next card");
             nextCard.transform.position = pointerEventData.position + yOffset;
             nextCard.DragNextCard(pointerEventData, yOffset + yOffset);
         }
@@ -237,6 +232,9 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
     // Mouse enter
     public void OnPointerEnter(PointerEventData pointerEventData) {
+        if (nextCard != null) {
+            Debug.Log("next card is not null");
+        }
         if (isMoveable) {
             originalSprite = cardImage.sprite;
             cardImage.sprite = highlightSprite;
@@ -255,6 +253,7 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         transform.position = pointerEventData.position;
         DragNextCard(pointerEventData, new Vector2(0, -cardImage.sprite.rect.height / 4));
     }
+
     // Mouse down
     public void OnPointerDown(PointerEventData pointerEventData) {
         if (isMoveable) {
@@ -266,13 +265,10 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     // Mouse up
     public void OnPointerUp(PointerEventData pointerEventData) {
         SetNextCardRaycastTarget(true);
-        DropSpace currentDropSpace = gameManager.GetEndingDropSpace(pointerEventData.position);
-        if (currentDropSpace != null) {
-            if (CanMoveToDropSpace(currentDropSpace)) {
-                parentDropSpace.RemoveCard(this);
-                currentDropSpace.AddCard(this);
-            }
-            else {
+        DropSpace endingDropSpace = gameManager.GetEndingDropSpace(pointerEventData.position);
+        if (endingDropSpace != null) {
+            bool movedCard = endingDropSpace.MoveCardToDropSpace(this);
+            if (!movedCard) {
                 ResetCardPosition();
             }
         }
@@ -280,15 +276,4 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
             ResetCardPosition();
         }
     }
-
-    // Start is called before the first frame update
-    void Start() {
-
-    }
-
-    // Update is called once per frame
-    void Update() {
-
-    }
-
 }

@@ -11,7 +11,7 @@ namespace Tests
     {
         // Create test game manager
         public static GameManager CreateTestGameManager() {
-            Object gameManagerPrefab = AssetDatabase.LoadAssetAtPath("Assets/Prefabs/GameManager.prefab", typeof(GameObject));
+            Object gameManagerPrefab = AssetDatabase.LoadAssetAtPath("Assets/Prefabs/Game Manager.prefab", typeof(GameObject));
             GameObject gameManagerObject = (GameObject)Object.Instantiate(gameManagerPrefab);
             GameManager newGameManager = gameManagerObject.GetComponent<GameManager>();
 
