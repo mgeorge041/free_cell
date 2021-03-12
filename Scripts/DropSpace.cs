@@ -20,8 +20,8 @@ public abstract class DropSpace : MonoBehaviour
         else if (typeof(T) == typeof(FreeSpace)) {
             dropSpacePrefab = AssetDatabase.LoadAssetAtPath("Assets/Prefabs/Free Space.prefab", typeof(GameObject));
         }
-        else if (typeof(T) == typeof(FreeSpace)) {
-            dropSpacePrefab = AssetDatabase.LoadAssetAtPath("Assets/Prefabs/Free Space.prefab", typeof(GameObject));
+        else if (typeof(T) == typeof(SuitSpace)) {
+            dropSpacePrefab = AssetDatabase.LoadAssetAtPath("Assets/Prefabs/Suit Space.prefab", typeof(GameObject));
         }
         else {
             dropSpacePrefab = AssetDatabase.LoadAssetAtPath("Assets/Prefabs/Drop Space.prefab", typeof(GameObject));

@@ -51,7 +51,7 @@ public class PlaySpace : DropSpace
         SetTrainMoveability(gameManager.GetNumMoveableCards());
 
         // Update box collider size
-        UpdateBoxColliderSize();
+        //UpdateBoxColliderSize();
     }
 
     // Clear out cards
@@ -106,7 +106,7 @@ public class PlaySpace : DropSpace
         else {
             cardPlaceholder.SetActive(true);
         }
-        UpdateBoxColliderSize();
+        //UpdateBoxColliderSize();
     }
 
     // Determine whether can move to drop space

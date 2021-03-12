@@ -13,13 +13,13 @@ public class GameManager : MonoBehaviour
     int numFreeSpaces = 4;
     public PlaySpace[] playSpaces;
     public FreeSpace[] freeSpaces;
-    public GameObject playSpacePrefab;
-    public GameObject freeSpacePrefab;
+    public SuitSpace[] suitSpaces;
     
     // Area transforms
     public Transform dragCardTransform;
-    public Transform playSectionTransform;
-    public Transform freeSectionTransform;
+    public Transform playSectionTransform = null;
+    public Transform freeSectionTransform = null;
+    public Transform suitSectionTransform = null;
 
     // Player variables
     int numMoveableCards = 5;
@@ -65,20 +65,16 @@ public class GameManager : MonoBehaviour
     }
 
     // Create deck
-    private void CreateCards() {
+    public void CreateCards() {
         // Create cards
         cards = new List<Card>();
-        CardColor[] cardColors = new CardColor[] {
-            CardColor.red,
-            CardColor.black
-        };
         Suit[] suits = new Suit[] {
             Suit.clubs,
             Suit.diamonds,
             Suit.hearts,
             Suit.spades
         };
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 13; i++) {
             for (int j = 0; j < 4; j++) {
 
                 // Create card
@@ -89,6 +85,56 @@ public class GameManager : MonoBehaviour
                 cards.Add(newCard);
             }
         }
+    }
+
+    // Get deck
+    public List<Card> GetCards() {
+        return cards;
+    }
+
+    // Create drop spaces
+    public void CreateDropSpaces() {
+        // Create play section drop spaces
+        playSpaces = new PlaySpace[8];
+        for (int i = 0; i < 8; i++) {
+            PlaySpace newPlaySpace = DropSpace.CreateDropSpace<PlaySpace>();
+            newPlaySpace.transform.SetParent(playSectionTransform);
+            playSpaces[i] = newPlaySpace;
+            newPlaySpace.Initialize(this);
+        }
+
+        // Create free section drop spaces
+        freeSpaces = new FreeSpace[4];
+        for (int i = 0; i < 4; i++) {
+            FreeSpace newFreeSpace = DropSpace.CreateDropSpace<FreeSpace>();
+            newFreeSpace.transform.SetParent(freeSectionTransform);
+            freeSpaces[i] = newFreeSpace;
+            newFreeSpace.Initialize(this);
+        }
+
+        // Create suit section drop spaces
+        suitSpaces = new SuitSpace[4];
+        for (int i = 0; i < 4; i++) {
+            SuitSpace newSuitSpace = DropSpace.CreateDropSpace<SuitSpace>();
+            newSuitSpace.transform.SetParent(suitSectionTransform);
+            suitSpaces[i] = newSuitSpace;
+            newSuitSpace.Initialize(this);
+        }
+    }
+
+    // Get play spaces
+    public PlaySpace[] GetPlaySpaces() {
+        return playSpaces;
+    }
+
+    // Get play spaces
+    public FreeSpace[] GetFreeSpaces() {
+        return freeSpaces;
+    }
+
+    // Get play spaces
+    public SuitSpace[] GetSuitSpaces() {
+        return suitSpaces;
     }
 
     // Reset game
@@ -116,27 +162,16 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Start is called before the first frame update
-    void Start() {
-        playSpaces = new PlaySpace[8];
-        // Create play section drop spaces
-        for (int i = 0; i < 8; i++) {
-            PlaySpace newPlaySpace = DropSpace.CreateDropSpace<PlaySpace>();
-            newPlaySpace.transform.SetParent(playSectionTransform);
-            playSpaces[i] = newPlaySpace;
-            newPlaySpace.Initialize(this);
-        }
-
-        // Create free section drop spaces
-        freeSpaces = new FreeSpace[4];
-        for (int i = 0; i < 4; i++) {
-            FreeSpace newFreeSpace = DropSpace.CreateDropSpace<FreeSpace>();
-            newFreeSpace.transform.SetParent(freeSectionTransform);
-            freeSpaces[i] = newFreeSpace;
-            newFreeSpace.Initialize(this);
-        }
+    // Initializes game manager
+    public void Initialize() {
+        CreateDropSpaces();
         CreateCards();
         ResetGame();
+    }
+
+    // Start is called before the first frame update
+    void Start() {
+        Initialize();
     }
 
     // Update is called once per frame

@@ -169,6 +169,14 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         return false;
     }
 
+    // Determine whether prev card is in suit order
+    public bool IsPrevCardInSuitOrder(Card prevCard) {
+        if (cardSuit == prevCard.GetCardSuit() && prevCard.GetCardValue() == cardValue - 1) {
+            return true;
+        }
+        return false;
+    }
+
     // Set prev cards immoveable
     public void SetPrevCardsImmovable() {
         if (prevCard != null) {
