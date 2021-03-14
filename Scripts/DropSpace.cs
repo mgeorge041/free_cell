@@ -61,21 +61,24 @@ public abstract class DropSpace : MonoBehaviour
     // Remove card from drop space
     public abstract void RemoveCard(Card card);
 
+    // Clear cards
+    public abstract void ClearCards();
+
     // Get last card from drop space
     public abstract Card GetLastCard();
 
-    // Move card to drop space
-    public bool MoveCardToDropSpace(Card card) {
-        if (CanMoveToDropSpace(card)) {
-            card.RemoveFromParentDropSpace();
-            AddCard(card);
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
+    // Get number of cards
+    public abstract int GetNumCards();
+
+    // Determine whether card is in order
+    public abstract bool CardsInOrder(Card prevCard, Card nextCard);
 
     // Determine whether can move to drop space
     public abstract bool CanMoveToDropSpace(Card card);
+
+    // Move card to drop space
+    public abstract void MoveCardToDropSpace(Card card);
+
+    // Determine moveability for stack
+    public abstract void SetTrainMoveability(int numMoveableCards);
 }

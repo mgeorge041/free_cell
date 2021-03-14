@@ -5,6 +5,8 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     // Cards
+    int numCardValues = 13;
+    int numCardSuits = 4;
     private List<Card> cards;
     public GameObject cardPrefab;
 
@@ -55,7 +57,7 @@ public class GameManager : MonoBehaviour
     // Shuffle cards
     public void ShuffleCards() {
         List<Card> shuffledCards = new List<Card>();
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < (numCardValues * numCardSuits); i++) {
             int randomInt = Random.Range(0, cards.Count);
             Card randomCard = cards[randomInt];
             shuffledCards.Add(randomCard);
@@ -74,8 +76,8 @@ public class GameManager : MonoBehaviour
             Suit.hearts,
             Suit.spades
         };
-        for (int i = 0; i < 13; i++) {
-            for (int j = 0; j < 4; j++) {
+        for (int i = 0; i < numCardValues; i++) {
+            for (int j = 0; j < numCardSuits; j++) {
 
                 // Create card
                 GameObject newCardObject = Instantiate(cardPrefab);
@@ -90,6 +92,19 @@ public class GameManager : MonoBehaviour
     // Get deck
     public List<Card> GetCards() {
         return cards;
+    }
+
+    // Deal cards
+    public void DealCards() {
+        ShuffleCards();
+        int column = 0;
+        for (int i = 0; i < cards.Count; i++) {
+            playSpaces[column].AddCard(cards[i]);
+            column++;
+            if (column >= numPlaySpaces) {
+                column = 0;
+            }
+        }
     }
 
     // Create drop spaces
@@ -146,20 +161,21 @@ public class GameManager : MonoBehaviour
         }
 
         // Randomly play cards
-        ShuffleCards();
-        int column = 0;
-        for (int i = 0; i < cards.Count; i++) {
-            playSpaces[column].AddCard(cards[i]);
-            column++;
-            if (column >= 8) {
-                column = 0;
-            }
-        }
+        DealCards();
 
         // Set moveability for cards in piles
         for (int i = 0; i < numPlaySpaces; i++) {
             playSpaces[i].SetTrainMoveability(numMoveableCards);
         }
+    }
+
+    // Move card from one drop space to another
+    public bool MoveCard(Card card, DropSpace dropSpace) {
+        if (dropSpace.CanMoveToDropSpace(card)) {
+            dropSpace.MoveCardToDropSpace(card);
+            return true;
+        }
+        return false;
     }
 
     // Initializes game manager

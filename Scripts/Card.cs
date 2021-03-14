@@ -13,8 +13,8 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     public bool isMoveable = false;
 
     // Train of cards
-    private Card nextCard;
-    private Card prevCard;
+    private Card nextCard = null;
+    private Card prevCard = null;
     private int numNextCards;
 
     // Card object items
@@ -32,7 +32,7 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     public void Initialize (int cardValue, Suit suit) {
         this.cardValue = cardValue;
         cardValueText.text = cardValue.ToString();
-
+        
         // Set card suit and color
         this.cardSuit = suit;
         if (suit == Suit.clubs || suit == Suit.spades) {
@@ -61,6 +61,8 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
             default:
                 break;
         }
+
+        ResetCard();
     }
 
     // Reset card
@@ -94,6 +96,16 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     // Get next card
     public Card GetNextCard() {
         return nextCard;
+    }
+
+    // Set next and prev cards
+    public static void SetNextPrevCard(Card prevCard, Card nextCard) {
+        if (prevCard != null) {
+            prevCard.SetNextCard(nextCard);
+        }
+        if (nextCard != null) {
+            nextCard.SetPrevCard(prevCard);
+        }
     }
 
     // Set next card
@@ -193,6 +205,7 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     // Remove card from parent drop space
     public void RemoveFromParentDropSpace() {
         parentDropSpace.RemoveCard(this);
+        parentDropSpace.SetTrainMoveability(gameManager.GetNumMoveableCards());
     }
 
     // Set game manager
@@ -275,7 +288,8 @@ public class Card : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         SetNextCardRaycastTarget(true);
         DropSpace endingDropSpace = gameManager.GetEndingDropSpace(pointerEventData.position);
         if (endingDropSpace != null) {
-            bool movedCard = endingDropSpace.MoveCardToDropSpace(this);
+            gameManager.MoveCard(this, endingDropSpace);
+            bool movedCard = gameManager.MoveCard(this, endingDropSpace);
             if (!movedCard) {
                 ResetCardPosition();
             }

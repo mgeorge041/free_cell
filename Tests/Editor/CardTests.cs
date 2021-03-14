@@ -9,7 +9,7 @@ namespace Tests
 {
     public class CardTests {
 
-        // Create test card
+        // Create test card (5 of clubs)
         public static Card CreateTestCard(int cardValue = 5, Suit suit = Suit.clubs) {
             Object cardPrefab = AssetDatabase.LoadAssetAtPath("Assets/Prefabs/Card.prefab", typeof(GameObject));
             GameObject cardObject = (GameObject)Object.Instantiate(cardPrefab);
@@ -26,8 +26,8 @@ namespace Tests
             Card thirdCard = CreateTestCard(3, Suit.clubs);
 
             // Add cards into train
-            nextCard.SetNextCard(thirdCard);
-            newCard.SetNextCard(nextCard);
+            Card.SetNextPrevCard(newCard, nextCard);
+            Card.SetNextPrevCard(nextCard, thirdCard);
 
             return newCard;
         }
@@ -42,37 +42,23 @@ namespace Tests
             Assert.AreEqual(Suit.clubs, card.GetCardSuit());
             Assert.AreEqual(CardColor.black, card.GetCardColor());
             Assert.AreEqual(0, card.GetNumNextCards());
+            Assert.IsFalse(card.isMoveable);
         }
 
-        // Test next card in order
+        // Test setting next and prev cards
         [Test]
-        public void NextCardInOrder() {
-            int cardValue = 5;
-            Card newCard = CreateTestCard(cardValue, Suit.clubs);
+        public void SetsNextPrevCards() {
+            Card newCard = CreateTestCard(6, Suit.clubs);
+            Card secondCard = CreateTestCard(6, Suit.diamonds);
 
-            // Confirm next card 1 lower different suit correct
-            Card nextCard = CreateTestCard(cardValue - 1, Suit.diamonds);
-            newCard.SetNextCard(nextCard);
-            Assert.IsTrue(newCard.IsNextCardInOrder());
+            // Set next prev for two new cards
+            Card.SetNextPrevCard(newCard, secondCard);
 
-            // Confirm next card 1 higher different suit incorrect
-            nextCard = CreateTestCard(cardValue + 1, Suit.diamonds);
-            newCard.SetNextCard(nextCard);
-            Assert.IsFalse(newCard.IsNextCardInOrder());
-
-            // Confirm next card 1 lower same suit incorrect
-            nextCard = CreateTestCard(cardValue - 1, newCard.GetCardSuit());
-            newCard.SetNextCard(nextCard);
-            Assert.IsFalse(newCard.IsNextCardInOrder());
-
-            // Confirm next card 1 higher same suit incorrect
-            nextCard = CreateTestCard(cardValue + 1, newCard.GetCardSuit());
-            newCard.SetNextCard(nextCard);
-            Assert.IsFalse(newCard.IsNextCardInOrder());
-
-            // Confirm next card null incorrect
-            newCard.SetNextCard(null);
-            Assert.IsFalse(newCard.IsNextCardInOrder());
+            // Confirm next and prev are set correctly
+            Assert.IsNull(newCard.GetPrevCard());
+            Assert.AreEqual(secondCard, newCard.GetNextCard());
+            Assert.AreEqual(newCard, secondCard.GetPrevCard());
+            Assert.IsNull(secondCard.GetNextCard());
         }
 
         // Test set next card
@@ -135,37 +121,6 @@ namespace Tests
 
             // Confirm prev card is set correctly
             Assert.AreEqual(prevCard, newCard.GetPrevCard());
-        }
-
-        // Test prev card in order
-        [Test]
-        public void PrevCardInOrder() {
-            int cardValue = 5;
-            Card newCard = CreateTestCard(cardValue, Suit.clubs);
-
-            // Confirm prev card 1 lower different suit incorrect
-            Card nextCard = CreateTestCard(cardValue - 1, Suit.diamonds);
-            newCard.SetPrevCard(nextCard);
-            Assert.IsFalse(newCard.IsPrevCardInOrder());
-
-            // Confirm prev card 1 higher different suit correct
-            nextCard = CreateTestCard(cardValue + 1, Suit.diamonds);
-            newCard.SetPrevCard(nextCard);
-            Assert.IsTrue(newCard.IsPrevCardInOrder());
-
-            // Confirm prev card 1 lower same suit incorrect
-            nextCard = CreateTestCard(cardValue - 1, newCard.GetCardSuit());
-            newCard.SetPrevCard(nextCard);
-            Assert.IsFalse(newCard.IsPrevCardInOrder());
-
-            // Confirm prev card 1 higher same suit incorrect
-            nextCard = CreateTestCard(cardValue + 1, newCard.GetCardSuit());
-            newCard.SetPrevCard(nextCard);
-            Assert.IsFalse(newCard.IsPrevCardInOrder());
-
-            // Confirm next card null correct
-            newCard.SetPrevCard(nextCard);
-            Assert.IsTrue(newCard.IsNextCardInOrder(null));
         }
 
         // Test move card

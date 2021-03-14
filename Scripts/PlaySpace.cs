@@ -6,11 +6,43 @@ public class PlaySpace : DropSpace
 {
     protected List<Card> cards = new List<Card>();
     public RectTransform rectTransform;
-    public GameObject cardPlaceholder;
 
     // Get cards
     public List<Card> GetCards() {
         return cards;
+    }
+
+    // Add card to play space
+    public override void AddCard(Card card) {
+        if (card == null) {
+            return;
+        }
+
+        // Add card train
+        while (card != null) {
+            Card.SetNextPrevCard(GetLastCard(), card);
+            cards.Add(card);
+            card.transform.SetParent(transform);
+            card.SetParentDropSpace(this);
+            card = card.GetNextCard();
+        }
+    }
+
+    // Remove card from drop space
+    public override void RemoveCard(Card card) {
+        while (card != null) {
+            cards.Remove(card);
+            card = card.GetNextCard();
+        }
+        if (cards.Count > 0) {
+            cards[cards.Count - 1].SetNextCard(null);
+        }
+        //UpdateBoxColliderSize();
+    }
+
+    // Clear out cards
+    public override void ClearCards() {
+        cards.Clear();
     }
 
     // Get last card in list
@@ -21,49 +53,43 @@ public class PlaySpace : DropSpace
         return null;
     }
 
-    // Add card to drop space
-    public override void AddCard(Card card) {
-        if (card == null) {
-            return;
-        }
-
-        // Deactivate card placeholder
-        cardPlaceholder.SetActive(false);
-
-        // Set next and prev cards
-        if (cards.Count > 0) {
-            cards[cards.Count - 1].SetNextCard(card);
-            card.SetPrevCard(cards[cards.Count - 1]);
-        }
-        else {
-            card.SetPrevCard(null);
-        }
-
-        // Add all cards in train
-        while (card != null) {
-            cards.Add(card);
-            card.transform.SetParent(transform);
-            card.SetParentDropSpace(this);
-            card = card.GetNextCard();
-        }
-
-        // Update train moveability
-        SetTrainMoveability(gameManager.GetNumMoveableCards());
-
-        // Update box collider size
-        //UpdateBoxColliderSize();
+    // Get number of cards
+    public override int GetNumCards() {
+        return cards.Count;
     }
 
-    // Clear out cards
-    public void ClearCards() {
-        foreach (Card card in cards) {
-            card.ResetCard();
+    // Determine whether card is in order
+    public override bool CardsInOrder(Card prevCard, Card nextCard) {
+        if (prevCard.GetCardColor() != nextCard.GetCardColor() && prevCard.GetCardValue() == nextCard.GetCardValue() + 1) {
+            return true;
         }
-        cards.Clear();
+        return false;
+    }
+
+    // Determine whether can move to drop space
+    public override bool CanMoveToDropSpace(Card card) {
+        Card lastCard = GetLastCard();
+        if (lastCard != null) {
+            Debug.Log("last card: " + lastCard.GetCardValue() + ", " + lastCard.GetCardColor());
+            Debug.Log("card: " + card.GetCardValue() + ", " + card.GetCardColor());
+        }
+
+        // Determine whether can drop card on space
+        if (lastCard == null || CardsInOrder(lastCard, card)) {
+            Debug.Log("can move to drop space");
+            return true;
+        }
+        return false;
+    }
+
+    // Move card to drop space
+    public override void MoveCardToDropSpace(Card card) {
+        card.RemoveFromParentDropSpace();
+        AddCard(card);
     }
 
     // Determine moveability for stack
-    public void SetTrainMoveability(int numMoveableCards) {
+    public override void SetTrainMoveability(int numMoveableCards) {
         Card currentCard = GetLastCard();
         currentCard.isMoveable = true;
 
@@ -92,36 +118,5 @@ public class PlaySpace : DropSpace
         float height = (float)(70 + 17.5 * (Mathf.Max(cards.Count - 1, 0)));
         rectTransform.sizeDelta = new Vector2(50, height);
         boxCollider.size = rectTransform.sizeDelta;
-    }
-
-    // Remove card from drop space
-    public override void RemoveCard(Card card) {
-        while (card != null) {
-            cards.Remove(card);
-            card = card.GetNextCard();
-        }
-        if (cards.Count > 0) {
-            cards[cards.Count - 1].SetNextCard(null);
-        }
-        else {
-            cardPlaceholder.SetActive(true);
-        }
-        //UpdateBoxColliderSize();
-    }
-
-    // Determine whether can move to drop space
-    public override bool CanMoveToDropSpace(Card card) {
-        Card lastCard = GetLastCard();
-        if (lastCard != null) {
-            Debug.Log("last card: " + lastCard.GetCardValue() + ", " + lastCard.GetCardColor());
-            Debug.Log("card: " + card.GetCardValue() + ", " + card.GetCardColor());
-        }
-
-        // Determine whether can drop card on space
-        if (lastCard == null || card.IsPrevCardInOrder(lastCard)) {
-            Debug.Log("can move to drop space");
-            return true;
-        }
-        return false;
     }
 }

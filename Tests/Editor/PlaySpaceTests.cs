@@ -8,55 +8,6 @@ namespace Tests
 {
     public class PlaySpaceTests
     {
-        /* Tests
-         * 
-         * Add card to empty play space
-         *      - Card should be moveable
-         *      - Card added to list of cards
-         * 
-         * Add card train to empty play space
-         *      - Cards should be moveable
-         *      - Cards added to list of cards
-         * 
-         * Add card to play space with 1 current card
-         *      # 1: 1 moveable card
-         *          - Card should be moveable
-         *          - Bottom card should not be moveable
-         *          - Card added to list of cards
-         *      # 2: 2 moveable cards
-         *          - Cards should be moveable
-         *          - Card added to list of cards
-         * 
-         * Add card train to play space with 1 current card
-         *      # 1: 3 moveable cards
-         *          - Card train should be moveable
-         *          - Bottom card should not be moveable
-         *          - Cards added to list of cards
-         *      # 2: 4 moveable cards
-         *          - Cards should be moveable
-         *          - Cards added to list of cards
-         *          
-         * Move 1 card from empty play space to another
-         *      - Card should be moveable
-         *      - 1st space should have no cards in list
-         *      - 2nd space should have card in list
-         *      
-         * Move 1 card from 1 card play space to empty play space
-         *      - Card should be moveable
-         *      - 1st space should have 1 card in list
-         *      - 2nd space should have card in list
-         *      
-         * Move 1 card from 1 card play space to 1 play space with 1 current card
-         *      # 1: 1 moveable card 
-         *          - Card should be moveable
-         *          - 1st space card should be moveable
-         *          - 2nd space bottom card should not be moveable
-         *      # 2: 2 moveable cards
-         *          - 1st space card should be moveable
-         *          - 2nd space cards should be moveable
-         * 
-         */
-
         // Create test play space
         public static PlaySpace CreateTestPlaySpace() {
             PlaySpace newPlaySpace = DropSpace.CreateDropSpace<PlaySpace>();
@@ -86,23 +37,48 @@ namespace Tests
         [Test]
         public void AddsCard() {
             // Create play space
-            PlaySpace newPlaySpace = CreateTestPlaySpaceWithGameManager();
+            PlaySpace newPlaySpace = CreateTestPlaySpace();
 
             // Add new card
             Card newCard = CardTests.CreateTestCard();
             newPlaySpace.AddCard(newCard);
 
-            // Confirm new card is added and moveable
+            // Confirm new card is added
             Assert.AreEqual(newCard, newPlaySpace.GetLastCard());
-            Assert.IsTrue(newPlaySpace.GetLastCard().isMoveable);
+            Assert.IsNull(newCard.GetPrevCard());
+            Assert.IsNull(newCard.GetNextCard());
         }
 
 
-        // Test add card train to empty play space
+        // Test add 2 cards
+        [Test]
+        public void AddsCards() {
+            // Create play space
+            PlaySpace newPlaySpace = CreateTestPlaySpace();
+
+            // Add new cards
+            Card newCard = CardTests.CreateTestCard();
+            newPlaySpace.AddCard(newCard);
+            Card nextCard = CardTests.CreateTestCard(6, Suit.diamonds);
+            newPlaySpace.AddCard(nextCard);
+
+            // Confirm new cards are added
+            Assert.AreEqual(nextCard, newPlaySpace.GetLastCard());
+            Assert.AreEqual(2, newPlaySpace.GetCards().Count);
+
+            // Confirm next prev cards set correctly
+            Assert.IsNull(newCard.GetPrevCard());
+            Assert.AreEqual(nextCard, newCard.GetNextCard());
+            Assert.AreEqual(newCard, nextCard.GetPrevCard());
+            Assert.IsNull(nextCard.GetNextCard());
+        }
+
+
+        // Test add card train
         [Test]
         public void AddsCardTrain() {
             // Create play space
-            PlaySpace newPlaySpace = CreateTestPlaySpaceWithGameManager();
+            PlaySpace newPlaySpace = CreateTestPlaySpace();
 
             // Add train of cards
             Card newCard = CardTests.CreateTestCardTrain();
@@ -110,11 +86,155 @@ namespace Tests
 
             // Confirm 3 cards added
             Assert.AreEqual(3, newPlaySpace.GetCards().Count);
+        }
 
-            // Confirm all cards are moveable
-            foreach (Card card in newPlaySpace.GetCards()) {
-                Assert.IsTrue(card.isMoveable);
-            }
+
+        // Test remove card
+        [Test]
+        public void RemovesCard() {
+            PlaySpace newPlaySpace = CreateTestPlaySpace();
+
+            // Add new card
+            Card newCard = CardTests.CreateTestCard(6, Suit.diamonds);
+            newPlaySpace.AddCard(newCard);
+
+            // Remove card
+            newPlaySpace.RemoveCard(newCard);
+
+            // Confirm card removed
+            Assert.IsNull(newPlaySpace.GetLastCard());
+            Assert.AreEqual(0, newPlaySpace.GetCards().Count);
+        }
+
+
+        // Test remove cards from train
+        [Test]
+        public void RemovesCardsFromTrain() {
+            PlaySpace newPlaySpace = CreateTestPlaySpace();
+
+            // Add train of cards
+            Card newCardTrain = CardTests.CreateTestCardTrain();
+            newPlaySpace.AddCard(newCardTrain);
+
+            // Remove 2nd card in train
+            newPlaySpace.RemoveCard(newCardTrain.GetNextCard());
+
+            // Confirm cards removed
+            Assert.AreEqual(newCardTrain, newPlaySpace.GetLastCard());
+            Assert.AreEqual(1, newPlaySpace.GetCards().Count);
+            Assert.IsNull(newCardTrain.GetNextCard());
+        }
+
+
+        // Test remove all cards from play space
+        [Test]
+        public void RemovesAllCardsFromTrain() {
+            PlaySpace newPlaySpace = CreateTestPlaySpace();
+
+            // Add train of cards
+            Card newCardTrain = CardTests.CreateTestCardTrain();
+            newPlaySpace.AddCard(newCardTrain);
+
+            // Remove all cards
+            newPlaySpace.RemoveCard(newCardTrain);
+
+            // Confirms all cards removed
+            Assert.IsNull(newPlaySpace.GetLastCard());
+            Assert.AreEqual(0, newPlaySpace.GetCards().Count);
+        }
+
+
+        // Test move to empty space
+        [Test]
+        public void CanMoveToEmptyPlaySpace() {
+            PlaySpace newPlaySpace = CreateTestPlaySpace();
+            Card newCard = CardTests.CreateTestCard();
+
+            // Confirm card can move to empty play space
+            bool canMove = newPlaySpace.CanMoveToDropSpace(newCard);
+            Assert.IsTrue(canMove);
+        }
+
+
+        // Test move to space with current card
+        [Test]
+        public void CanMoveToPlaySpaceWithCard() {
+            PlaySpace newPlaySpace = CreateTestPlaySpace();
+            Card newCard = CardTests.CreateTestCard();
+            int cardValue = newCard.GetCardValue();
+            newPlaySpace.AddCard(newCard);
+
+            // Confirm next card 1 lower different suit correct
+            Card nextCard = CardTests.CreateTestCard(cardValue - 1, Suit.diamonds);
+            bool canMove = newPlaySpace.CanMoveToDropSpace(nextCard);
+            Assert.IsTrue(canMove);
+
+            // Confirm next card 1 higher different suit incorrect
+            nextCard = CardTests.CreateTestCard(cardValue + 1, Suit.diamonds);
+            canMove = newPlaySpace.CanMoveToDropSpace(nextCard);
+            Assert.IsFalse(canMove);
+
+            // Confirm next card 1 lower same suit incorrect
+            nextCard = CardTests.CreateTestCard(cardValue - 1, newCard.GetCardSuit());
+            canMove = newPlaySpace.CanMoveToDropSpace(nextCard);
+            Assert.IsFalse(canMove);
+
+            // Confirm next card 1 higher same suit incorrect
+            nextCard = CardTests.CreateTestCard(cardValue + 1, newCard.GetCardSuit());
+            canMove = newPlaySpace.CanMoveToDropSpace(nextCard);
+            Assert.IsFalse(canMove);
+        }
+
+
+        // Test cards in order
+        [Test]
+        public void CardsInOrder() {
+            PlaySpace newPlaySpace = CreateTestPlaySpace();
+            Card newCard = CardTests.CreateTestCard();
+            int cardValue = newCard.GetCardValue();
+
+            // Confirm next card 1 lower different suit correct
+            Card nextCard = CardTests.CreateTestCard(cardValue - 1, Suit.diamonds);
+            bool canMove = newPlaySpace.CardsInOrder(newCard, nextCard);
+            Assert.IsTrue(canMove);
+
+            // Confirm next card 1 higher different suit incorrect
+            nextCard = CardTests.CreateTestCard(cardValue + 1, Suit.diamonds);
+            canMove = newPlaySpace.CardsInOrder(newCard, nextCard);
+            Assert.IsFalse(canMove);
+
+            // Confirm next card 1 lower same suit incorrect
+            nextCard = CardTests.CreateTestCard(cardValue - 1, newCard.GetCardSuit());
+            canMove = newPlaySpace.CardsInOrder(newCard, nextCard);
+            Assert.IsFalse(canMove);
+
+            // Confirm next card 1 higher same suit incorrect
+            nextCard = CardTests.CreateTestCard(cardValue + 1, newCard.GetCardSuit());
+            canMove = newPlaySpace.CardsInOrder(newCard, nextCard);
+            Assert.IsFalse(canMove);
+        }
+
+
+        // Test card train moveability
+        [Test]
+        public void SetsCardTrainMoveability() {
+            PlaySpace newPlaySpace = CreateTestPlaySpace();
+            Card newCard = CardTests.CreateTestCard(5, Suit.clubs);
+            Card secondCard = CardTests.CreateTestCard(4, Suit.diamonds);
+
+            // Add cards
+            newPlaySpace.AddCard(newCard);
+            newPlaySpace.AddCard(secondCard);
+
+            // Confirm both cards can move
+            newPlaySpace.SetTrainMoveability(2);
+            Assert.IsTrue(newCard.isMoveable);
+            Assert.IsTrue(secondCard.isMoveable);
+
+            // Confirm bottom card can move
+            newPlaySpace.SetTrainMoveability(1);
+            Assert.IsFalse(newCard.isMoveable);
+            Assert.IsTrue(secondCard.isMoveable);
         }
 
 
@@ -272,61 +392,6 @@ namespace Tests
         }
 
 
-        // Test remove card
-        [Test]
-        public void RemovesCards() {
-            PlaySpace newPlaySpace = CreateTestPlaySpaceWithGameManager();
-
-            // Add new card
-            Card newCard = CardTests.CreateTestCard(6, Suit.diamonds);
-            newPlaySpace.AddCard(newCard);
-
-            // Remove card
-            newPlaySpace.RemoveCard(newCard);
-
-            // Confirm card removed
-            Assert.IsNull(newPlaySpace.GetLastCard());
-            Assert.AreEqual(0, newPlaySpace.GetCards().Count);
-        }
-
-
-        // Test remove cards from train
-        [Test]
-        public void RemovesCardsFromTrain() {
-            PlaySpace newPlaySpace = CreateTestPlaySpaceWithGameManager();
-
-            // Add train of cards
-            Card newCardTrain = CardTests.CreateTestCardTrain();
-            newPlaySpace.AddCard(newCardTrain);
-
-            // Remove 2nd card in train
-            newPlaySpace.RemoveCard(newCardTrain.GetNextCard());
-
-            // Confirm cards removed
-            Assert.AreEqual(newCardTrain, newPlaySpace.GetLastCard());
-            Assert.AreEqual(1, newPlaySpace.GetCards().Count);
-            Assert.IsNull(newCardTrain.GetNextCard());
-        }
-
-
-        // Test remove all cards from play space
-        [Test]
-        public void RemovesAllCards() {
-            PlaySpace newPlaySpace = CreateTestPlaySpaceWithGameManager();
-
-            // Add train of cards
-            Card newCardTrain = CardTests.CreateTestCardTrain();
-            newPlaySpace.AddCard(newCardTrain);
-
-            // Remove all cards
-            newPlaySpace.RemoveCard(newCardTrain);
-
-            // Confirms all cards removed
-            Assert.IsNull(newPlaySpace.GetLastCard());
-            Assert.AreEqual(0, newPlaySpace.GetCards().Count);
-        }
-
-
         // Test box collider size update
         [Test]
         public void BoxColliderUpdatesSize() {
@@ -339,9 +404,8 @@ namespace Tests
             Card newCard = CardTests.CreateTestCard();
             newPlaySpace.AddCard(newCard);
 
-            // Confirm still initial size and placeholder is deactivated
+            // Confirm still initial size
             Assert.AreEqual(70, newPlaySpace.GetComponent<RectTransform>().rect.height);
-            Assert.IsFalse(newPlaySpace.cardPlaceholder.activeSelf);
 
             // Add second card
             Card nextCard = CardTests.CreateTestCard();
@@ -360,9 +424,8 @@ namespace Tests
             // Remove both cards
             newPlaySpace.RemoveCard(newCard);
 
-            // Confirm size updates correctly and placeholder activates
+            // Confirm size updates correctly
             Assert.AreEqual(70, newPlaySpace.GetComponent<RectTransform>().rect.height);
-            Assert.IsTrue(newPlaySpace.cardPlaceholder.activeSelf);
         }
     }
 }
